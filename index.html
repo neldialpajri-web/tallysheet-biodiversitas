@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#2e7d32">
+    <title>Survey Biodiversitas</title>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-dark: #1b5e20;
+            --secondary: #81c784;
+            --bg: #f4f6f4;
+            --text: #333;
+            --border: #c8e6c9;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); margin: 0; padding: 10px; color: var(--text); padding-bottom: 30px; }
+        .header { background: var(--primary); color: white; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .header h2 { margin: 0; font-size: 1.2rem; }
+        .badge { background: white; color: var(--primary); padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; color: var(--primary-dark); }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; }
+        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 5px rgba(46, 125, 50, 0.3); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 5px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .btn:hover { background: var(--primary-dark); }
+        .btn-gps { background: #1976d2; margin-top: 0; }
+        .btn-export { background: #f57c00; margin-bottom: 15px;}
+        .btn-danger { background: #d32f2f; padding: 5px 10px; font-size: 0.8rem; width: auto; }
+        .taxa-section { background: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--border); }
+        .dynamic-fields { display: none; margin-top: 10px; }
+        .active-fields { display: block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+        th { background-color: var(--primary); color: white; }
+        .table-responsive { overflow-x: auto; }
+        #gps-status { font-size: 0.8rem; color: #d32f2f; margin-top: 5px; font-weight: bold; }
+        .analysis-box { background: #e3f2fd; padding: 15px; border-radius: 5px; margin-top: 10px; border: 1px solid #bbdefb; }
+        .analysis-box p { margin: 5px 0; }
+        .tabs { display: flex; margin-bottom: 15px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .tab-btn { flex: 1; padding: 12px; background: white; border: none; cursor: pointer; font-weight: bold; color: #555; border-bottom: 3px solid transparent; }
+        .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>🌿 Survey Biodiversitas</h2>
+        <span class="badge">Siap Offline</span>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('form')">📝 Form Input</button>
+        <button class="tab-btn" onclick="switchTab('data')">📊 Data & Analisis</button>
+    </div>
+
+    <!-- TAB FORM INPUT -->
+    <div id="tab-form" class="tab-content active">
+        <div class="card">
+            <h3>Informasi Waktu & Lokasi</h3>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Tanggal</label>
+                    <input type="date" id="tanggal" required>
+                </div>
+                <div class="form-group">
+                    <label>Waktu</label>
+                    <input type="time" id="waktu" required>
+                </div>
+                <div class="form-group">
+                    <label>Desa</label>
+                    <input type="text" id="desa" placeholder="Nama Desa">
+                </div>
+                <div class="form-group">
+                    <label>Stasiun / Transek</label>
+                    <input type="text" id="lokasi" placeholder="Misal: Transek A">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ccc;">
+                <label style="display: flex; justify-content: space-between; align-items: center;">
+                    Koordinat (X / Y) 
+                    <button type="button" class="btn btn-gps" style="width: auto; padding: 6px 12px;" onclick="getGPS()">📍 Ambil GPS</button>
+                </label>
+                <div class="grid-2">
+                    <input type="number" step="any" id="lat" placeholder="X (Latitude)">
+                    <input type="number" step="any" id="lng" placeholder="Y (Longitude)">
+                </div>
+                <div id="gps-status"></div>
+            </div>
+        </div>
+
+        <div class="card taxa-section">
+            <div class="form-group">
+                <label>Kelompok / Taksa Target</label>
+                <select id="kategori-taksa" onchange="changeTaxaForm()" style="border-color: var(--primary); font-weight: bold;">
+                    <option value="Mamalia">🐾 Mamalia</option>
+                    <option value="Avifauna">🦅 Avifauna</option>
+                    <option value="KupuCapung">🦋 Kupu-kupu & Capung</option>
+                    <option value="Herpetofauna">🐸 Herpetofauna</option>
+                    <option value="Flora">🌳 Flora</option>
+                </select>
+            </div>
+
+            <!-- Dynamic Form: Mamalia -->
+            <div id="form-Mamalia" class="dynamic-fields active-fields">
+                <div class="form-group">
+                    <label>Metode Pengamatan</label>
+                    <select id="metode-mamalia">
+                        <option value="Rapid Assessment">Rapid Assessment (Langsung)</option>
+                        <option value="Line/Strip Transect">Line/Strip Transect (Langsung)</option>
+                        <option value="Tanda Satwa (Jejak/Kotoran)">Identifikasi Tanda Satwa (Tidak Langsung)</option>
+                        <option value="Perangkap">Pemasangan Perangkap (Tidak Langsung)</option>
+                        <option value="Camera Trap">Camera Trap (Tidak Langsung)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Dynamic Form: Avifauna -->
+            <div id="form-Avifauna" class="dynamic-fields">
+                <div class="form-group">
+                    <label>Metode Pengamatan</label>
+                    <select id="metode-avifauna">
+                        <option value="Point Counts / IPA">Point Counts / IPA</option>
+                        <option value="Line Transect">Line Transect</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Dynamic Form: Kupu-kupu & Capung -->
+            <div id="form-KupuCapung" class="dynamic-fields">
+                <div class="form-group">
+                    <label>Metode Pengamatan</label>
+                    <select id="metode-kupucapung">
+                        <option value="Eksplorasi">Eksplorasi (Langsung)</option>
+                        <option value="Tidak Langsung">Tidak Langsung</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Dynamic Form: Herpetofauna -->
+            <div id="form-Herpetofauna" class="dynamic-fields">
+                <div class="form-group">
+                    <label>Metode Pengamatan</label>
+                    <select id="metode-herpetofauna">
+                        <option value="VES (Visual Encounter Survey)">VES (Visual Encounter Survey)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Dynamic Form: Flora -->
+            <div id="form-Flora" class="dynamic-fields">
+                <div class="form-group">
+                    <label>Metode Pengamatan</label>
+                    <select id="metode-flora">
+                        <option value="Line Transect & Nested Plot">Line Transect & Nested Plot (Purposive)</option>
+                    </select>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Kawasan / Habitat</label>
+                        <select id="flora-kawasan">
+                            <option value="Pohon Rapat">Pohon Rapat</option>
+                            <option value="Pohon Sedang">Pohon Sedang</option>
+                            <option value="Semak/Belukar">Semak/Belukar</option>
+                            <option value="Dekat Sumber Air">Dekat Sumber Air</option>
+                            <option value="Area Terganggu">Area Terganggu</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fase Pertumbuhan</label>
+                        <select id="flora-fase">
+                            <option value="Pohon (20x20m)">Pohon (20x20 m)</option>
+                            <option value="Tiang (10x10m)">Tiang (10x10 m)</option>
+                            <option value="Pancang (5x5m)">Pancang (5x5 m)</option>
+                            <option value="Semai (2x2m)">Semai/Bawah (2x2 m)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Diameter / DBH (cm)</label>
+                        <input type="number" step="any" id="flora-dbh" placeholder="Khusus pohon/tiang">
+                    </div>
+                    <div class="form-group">
+                        <label>Tinggi (m)</label>
+                        <input type="number" step="any" id="flora-tinggi" placeholder="Estimasi tinggi">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Kondisi Vegetasi</label>
+                    <input type="text" id="flora-kondisi" placeholder="Sehat, mati, dililit liana...">
+                </div>
+            </div>
+
+            <hr style="border: 0.5px solid var(--primary); margin: 15px 0; opacity: 0.3;">
+
+            <!-- Isian Spesies (Umum) -->
+            <div class="form-group">
+                <label>Nama Spesies / Lokal</label>
+                <input type="text" id="spesies" placeholder="Contoh: Macaca fascicularis / Shorea sp." required>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Jumlah Individu</label>
+                    <input type="number" id="jumlah" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Keterangan / Aktivitas</label>
+                    <input type="text" id="keterangan" placeholder="Makan, jejak, dll...">
+                </div>
+            </div>
+
+            <button class="btn" onclick="simpanData()">💾 Simpan Data Pengamatan</button>
+        </div>
+    </div>
+
+    <!-- TAB DATA & ANALISIS -->
+    <div id="tab-data" class="tab-content">
+        <div class="card">
+            <button class="btn btn-export" onclick="exportCSV()">📥 Export Data ke CSV (Google Sheet)</button>
+            
+            <h3 style="margin-top:10px; color: var(--primary-dark);">Analisis Ekologi Cepat</h3>
+            <div class="form-group">
+                <label>Pilih Taksa untuk dianalisis:</label>
+                <select id="analisis-taksa" onchange="hitungIndeks()">
+                    <option value="Semua">Semua Taksa Gabungan</option>
+                    <option value="Mamalia">Mamalia</option>
+                    <option value="Avifauna">Avifauna</option>
+                    <option value="KupuCapung">Kupu-kupu & Capung</option>
+                    <option value="Herpetofauna">Herpetofauna</option>
+                    <option value="Flora">Flora</option>
+                </select>
+            </div>
+            
+            <div class="analysis-box">
+                <p><strong>Total Spesies (S):</strong> <span id="val-S">0</span></p>
+                <p><strong>Total Individu (N):</strong> <span id="val-N">0</span></p>
+                <p><strong>Indeks Keanekaragaman (H'):</strong> <span id="val-H">0</span> <br><small style="color:#555;"><i>(Shannon-Wiener: &lt; 1 Rendah, 1-3 Sedang, &gt; 3 Tinggi)</i></small></p>
+                <p><strong>Indeks Kemerataan (E):</strong> <span id="val-E">0</span></p>
+                <p><strong>Indeks Kekayaan (R):</strong> <span id="val-R">0</span></p>
+                <p><strong>Indeks Dominansi (C):</strong> <span id="val-C">0</span></p>
+            </div>
+
+            <h3 style="margin-top:20px; color: var(--primary-dark);">Rekapan Data Tersimpan</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Waktu & Lokasi</th>
+                            <th>Taksa & Metode</th>
+                            <th>Spesies & Info</th>
+                            <th>Hapus</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel-body">
+                        <!-- Data render here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inisialisasi Tanggal dan Waktu
+        document.getElementById('tanggal').valueAsDate = new Date();
+        document.getElementById('waktu').value = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+        let dataSurvey = JSON.parse(localStorage.getItem('dataSurveyBiodiversitas')) || [];
+
+        // Fungsi Pindah Tab
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            
+            if(tabId === 'data') {
+                renderTabel();
+                hitungIndeks();
+            }
+        }
+
+        // Fungsi Tampil/Sembunyikan Form Dinamis
+        function changeTaxaForm() {
+            let taksa = document.getElementById('kategori-taksa').value;
+            document.querySelectorAll('.dynamic-fields').forEach(el => el.classList.remove('active-fields'));
+            document.getElementById('form-' + taksa).classList.add('active-fields');
+        }
+
+        // Fungsi Ambil GPS
+        function getGPS() {
+            const status = document.getElementById('gps-status');
+            if (!navigator.geolocation) {
+                status.innerText = "Browser tidak mendukung GPS.";
+                return;
+            }
+            status.style.color = "#1976d2";
+            status.innerText = "Mencari satelit... (Pastikan GPS/Lokasi HP menyala)";
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    document.getElementById('lat').value = position.coords.latitude.toFixed(6);
+                    document.getElementById('lng').value = position.coords.longitude.toFixed(6);
+                    status.style.color = "green";
+                    status.innerText = `✅ Koordinat terkunci! (Akurasi: ${position.coords.accuracy.toFixed(1)} m)`;
+                },
+                (error) => {
+                    status.style.color = "red";
+                    status.innerText = `❌ Gagal: ${error.message}. Pastikan izin lokasi diizinkan oleh browser.`;
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+        }
+
+        // Fungsi Simpan Data
+        function simpanData() {
+            let spesies = document.getElementById('spesies').value;
+            if (!spesies) { alert("Nama spesies wajib diisi!"); return; }
+
+            let taksa = document.getElementById('kategori-taksa').value;
+            let metode = "";
+            let floraData = {};
+
+            if (taksa === "Mamalia") metode = document.getElementById('metode-mamalia').value;
+            else if (taksa === "Avifauna") metode = document.getElementById('metode-avifauna').value;
+            else if (taksa === "KupuCapung") metode = document.getElementById('metode-kupucapung').value;
+            else if (taksa === "Herpetofauna") metode = document.getElementById('metode-herpetofauna').value;
+            else if (taksa === "Flora") {
+                metode = document.getElementById('metode-flora').value;
+                floraData = {
+                    kawasan: document.getElementById('flora-kawasan').value,
+                    fase: document.getElementById('flora-fase').value,
+                    dbh: document.getElementById('flora-dbh').value || "-",
+                    tinggi: document.getElementById('flora-tinggi').value || "-",
+                    kondisi: document.getElementById('flora-kondisi').value || "-"
+                };
+            }
+
+            const itemBaru = {
+                id: Date.now(),
+                tanggal: document.getElementById('tanggal').value,
+                waktu: document.getElementById('waktu').value,
+                desa: document.getElementById('desa').value || "-",
+                lokasi: document.getElementById('lokasi').value || "-",
+                lat: document.getElementById('lat').value || "-",
+                lng: document.getElementById('lng').value || "-",
+                taksa: taksa,
+                metode: metode,
+                spesies: spesies,
+                jumlah: parseInt(document.getElementById('jumlah').value) || 1,
+                keterangan: document.getElementById('keterangan').value || "-",
+                ...floraData
+            };
+
+            dataSurvey.push(itemBaru);
+            localStorage.setItem('dataSurveyBiodiversitas', JSON.stringify(dataSurvey));
+            
+            alert("✅ Data berhasil disimpan!");
+            
+            // Reset input yang sering berubah
+            document.getElementById('spesies').value = '';
+            document.getElementById('jumlah').value = '1';
+            document.getElementById('keterangan').value = '';
+            if(taksa === "Flora") {
+                document.getElementById('flora-dbh').value = '';
+                document.getElementById('flora-tinggi').value = '';
+                document.getElementById('flora-kondisi').value = '';
+            }
+        }
+
+        // Fungsi Render Tabel
+        function renderTabel() {
+            const tbody = document.getElementById('tabel-body');
+            tbody.innerHTML = '';
+            
+            const dataReversed = [...dataSurvey].reverse();
+
+            dataReversed.forEach(d => {
+                let floraInfo = "";
+                if(d.taksa === "Flora") {
+                    floraInfo = `<br><span style="color:#1b5e20; font-size:0.8rem;">[${d.kawasan} | ${d.fase}] DBH:${d.dbh} T:${d.tinggi}</span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <b>${d.tanggal} ${d.waktu}</b><br>
+                            Desa: <b>${d.desa}</b><br>
+                            Stasiun: ${d.lokasi}<br>
+                            <span style="color:blue; font-size:0.8rem;">${d.lat}, ${d.lng}</span>
+                        </td>
+                        <td><b>${d.taksa}</b><br><span style="font-size:0.8rem;">${d.metode}</span></td>
+                        <td>
+                            <b><i>${d.spesies}</i></b> (n=${d.jumlah})<br>
+                            Ket: ${d.keterangan}
+                            ${floraInfo}
+                        </td>
+                        <td><button class="btn-danger" onclick="hapusData(${d.id})">X</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Fungsi Hapus Data
+        function hapusData(id) {
+            if(confirm("Yakin ingin menghapus data ini?")) {
+                dataSurvey = dataSurvey.filter(d => d.id !== id);
+                localStorage.setItem('dataSurveyBiodiversitas', JSON.stringify(dataSurvey));
+                renderTabel();
+                hitungIndeks();
+            }
+        }
+
+        // Fungsi Hitung Indeks
+        function hitungIndeks() {
+            let filterTaksa = document.getElementById('analisis-taksa').value;
+            let dataFiltered = dataSurvey;
+            
+            if (filterTaksa !== "Semua") {
+                dataFiltered = dataSurvey.filter(d => d.taksa === filterTaksa);
+            }
+
+            let spesiesCount = {};
+            let totalN = 0;
+
+            dataFiltered.forEach(d => {
+                let sp = d.spesies.toLowerCase().trim();
+                spesiesCount[sp] = (spesiesCount[sp] || 0) + d.jumlah;
+                totalN += d.jumlah;
+            });
+
+            let S = Object.keys(spesiesCount).length;
+            let H = 0; // Shannon-Wiener
+            let C = 0; // Simpson
+
+            for (let key in spesiesCount) {
+                let pi = spesiesCount[key] / totalN;
+                H -= pi * Math.log(pi);
+                C += Math.pow(pi, 2);
+            }
+
+            let E = (S > 1) ? H / Math.log(S) : 0;
+            let R = (totalN > 1) ? (S - 1) / Math.log(totalN) : 0;
+
+            document.getElementById('val-S').innerText = S;
+            document.getElementById('val-N').innerText = totalN;
+            document.getElementById('val-H').innerText = isNaN(H) ? 0 : H.toFixed(3);
+            document.getElementById('val-E').innerText = isNaN(E) ? 0 : E.toFixed(3);
+            document.getElementById('val-R').innerText = isNaN(R) ? 0 : R.toFixed(3);
+            document.getElementById('val-C').innerText = isNaN(C) ? 0 : C.toFixed(3);
+        }
+
+        // Fungsi Export CSV
+        function exportCSV() {
+            if (dataSurvey.length === 0) { alert("Belum ada data untuk diekspor!"); return; }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Tanggal,Waktu,Desa,Lokasi_Transek,Latitude,Longitude,Taksa,Metode,Spesies,Jumlah_Individu,Keterangan,Flora_Habitat,Flora_FasePlot,Flora_DBH_cm,Flora_Tinggi_m,Flora_Kondisi\n";
+
+            dataSurvey.forEach(d => {
+                const clean = (str) => {
+                    if (str === undefined || str === null) return "-";
+                    return `"${String(str).replace(/"/g, '""')}"`;
+                };
+
+                let row = [
+                    d.tanggal, d.waktu, clean(d.desa), clean(d.lokasi), d.lat, d.lng,
+                    d.taksa, clean(d.metode), clean(d.spesies), d.jumlah, clean(d.keterangan),
+                    clean(d.kawasan), clean(d.fase), clean(d.dbh), clean(d.tinggi), clean(d.kondisi)
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "TallySheet_Biodiversitas_Export.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
